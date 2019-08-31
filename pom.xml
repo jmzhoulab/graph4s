@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.jmzhoulab</groupId>
   <artifactId>graph4s</artifactId>
-  <version>0.1.0</version>
+  <version>1.0-SNAPSHOT</version>
   <inceptionYear>2019</inceptionYear>
 
   <properties>
@@ -11,6 +11,50 @@
     <spark.version>2.1.0</spark.version>
     <dependency.scope>compile</dependency.scope>
   </properties>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <url>https://github.com/jmzhoulab/graph4s</url>
+    <connection>https://github.com/jmzhoulab/graph4s.git</connection>
+    <developerConnection>https://github.com/jmzhoulab/graph4s</developerConnection>
+  </scm>
+
+  <developers>
+    <developer>
+      <name>jmzhou</name>
+      <email>jmzhoulab@sina.cn</email>
+      <url>https://github.com/jmzhoulab/graph4s</url>
+    </developer>
+  </developers>
+
+  <!--<distributionManagement>-->
+    <!--<snapshotRepository>-->
+      <!--<id>ossrh</id>-->
+      <!--<url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
+    <!--</snapshotRepository>-->
+    <!--<repository>-->
+      <!--<id>ossrh</id>-->
+      <!--<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>-->
+    <!--</repository>-->
+  <!--</distributionManagement>-->
+
+  <distributionManagement>
+    <repository>
+      <id>maven-releases</id>
+      <url>http://192.168.1.21:8081/repository/maven-releases/</url>
+    </repository>
+    <snapshotRepository>
+      <id>maven-snapshots</id>
+      <url>http://192.168.1.21:8081/repository/maven-snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <dependencies>
     <dependency>
@@ -34,6 +78,12 @@
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
       <version>1.2.17</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql_${scala.binary}</artifactId>
+      <version>${spark.version}</version>
+      <scope>${dependency.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -67,19 +117,10 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.5</version>
         <configuration>
-          <downloadSources>true</downloadSources>
-          <buildcommands>
-            <buildcommand>ch.epfl.lamp.sdt.core.scalabuilder</buildcommand>
-          </buildcommands>
-          <additionalProjectnatures>
-            <projectnature>ch.epfl.lamp.sdt.core.scalanature</projectnature>
-          </additionalProjectnatures>
-          <classpathContainers>
-            <classpathContainer>org.eclipse.jdt.launching.JRE_CONTAINER</classpathContainer>
-            <classpathContainer>ch.epfl.lamp.sdt.launching.SCALA_CONTAINER</classpathContainer>
-          </classpathContainers>
+          <skip>true</skip>
         </configuration>
       </plugin>
       <plugin>
@@ -103,6 +144,46 @@
             <phase>package</phase>
             <goals>
               <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.2.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9.1</version>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>1.5</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
             </goals>
           </execution>
         </executions>

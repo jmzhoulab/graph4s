@@ -25,7 +25,7 @@ object StronglyConnectedComponents {
     *
     * @return a graph with vertex attributes containing the smallest vertex id in each SCC
     */
-  def run[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], numIter: Int): Graph[VertexId, ED] = {
+  def run[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], numIter: Int = 10): Graph[VertexId, ED] = {
     require(numIter > 0, s"Number of iterations must be greater than 0," +
       s" but got $numIter")
 

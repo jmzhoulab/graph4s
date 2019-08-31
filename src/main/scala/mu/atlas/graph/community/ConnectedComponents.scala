@@ -41,4 +41,27 @@ object ConnectedComponents {
     ccGraph
 
   }
+
+  def main(args: Array[String]): Unit = {
+    import mu.atlas.graph.utils._
+
+    val prop = new Props
+    prop.setProperty(args)
+
+    val spark = SparkHelper.getSparkSession(getClass.getSimpleName)
+
+    val rdd = spark.sparkContext.textFile(prop.getProperty("input"))
+      .map(line => {
+        val jv = JsonHelper.parseJson(line)
+        val from = JsonHelper.getJsonValue(jv, "_from")
+        val to = JsonHelper.getJsonValue(jv, "_to")
+        val
+      })
+
+    val graph = Graph.fromEdgeTuples(rdd, null)
+
+    val cc = ConnectedComponents.run(graph)
+
+  }
+
 }
