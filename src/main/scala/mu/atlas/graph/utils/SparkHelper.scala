@@ -42,21 +42,16 @@ object SparkHelper {
     log.info(s"Success to write to $outputFile")
   }
 
-  def getSparkSession(appName: String, enableHiveSupport: Boolean = false): SparkSession = {
-    val spark = {
-      if (enableHiveSupport){
-        SparkSession.builder().appName(appName)
-          .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-          .config("spark.rdd.compress", "true")
-          .enableHiveSupport()
-          .getOrCreate()
-      } else {
-        SparkSession.builder().appName(appName)
-          .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-          .config("spark.rdd.compress", "true")
-          .getOrCreate()
-      }
-    }
+  def getSparkSession(appName: String, configs: Array[(String, String)] = null, enableHiveSupport: Boolean = false): SparkSession = {
+
+    val builder = SparkSession.builder().appName(appName)
+      .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+      .config("spark.rdd.compress", "true")
+
+    if (configs != null) configs.foreach{case(k, v) => builder.config(k, v)}
+
+    val spark = if (enableHiveSupport) builder.enableHiveSupport().getOrCreate() else builder.getOrCreate()
+
     spark
   }
 

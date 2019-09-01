@@ -26,7 +26,10 @@ object BaseTool {
   def md5ToLong(md5: String): Long = BigInt(md5.substring(0, 16), 16).toLong
 
   val format: DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-  def currentTime: String = format.format(new Date())
+
+  def currTimeString: String = format.format(new Date())
+
+  def getTimestamp: Long = new Date().getTime
 
   def string2date(string: String): Date = format.parse(string)
 

@@ -133,7 +133,7 @@
           </descriptorRefs>
           <archive>
             <manifest>
-              <mainClass>mu.atlas.graph.App</mainClass>
+              <mainClass>mu.atlas.boot.Algorithm</mainClass>
             </manifest>
           </archive>
         </configuration>
