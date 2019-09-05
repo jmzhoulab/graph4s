@@ -3,6 +3,7 @@ package mu.atlas.graph.centrality
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.graphx._
 import mu.atlas.graph.Direction
+import mu.atlas.graph.log.LogFactory
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
@@ -11,6 +12,8 @@ import scala.reflect.ClassTag
   * Created by zhoujiamu on 2018/5/14.
   */
 object Kcore {
+
+  private val logger = LogFactory.getLogger(getClass)
 
   private def getDegree[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], direction: Direction): VertexRDD[Int] = {
     direction match {
@@ -35,11 +38,12 @@ object Kcore {
 
     while (kNum <= maxK){
       var isConverged = false
+      logger.info(s"currency solve ${kNum}-core vertex")
       while (!isConverged && lastResultCount < vertices){
 
         val preKcoreResult = kcoreResult
         kcoreResult = workGraph.vertices.filter(_._2 == kNum).union(kcoreResult).cache()
-        println("total kcoreResult count: " + kcoreResult.count)
+        logger.info("total kcoreResult count: " + kcoreResult.count)
 
         preKcoreResult.unpersist(blocking = false)
 
@@ -51,6 +55,7 @@ object Kcore {
         workGraph.numVertices
         workGraph.numEdges
 
+        subGraph.unpersist(blocking = false)
         preWorkGraph.unpersist(blocking = false)
 
         isConverged = lastResultCount == kcoreResult.count
