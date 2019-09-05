@@ -1,6 +1,7 @@
 package mu.atlas.graph.utils
 
 import java.io.{FileInputStream, InputStreamReader}
+import scala.collection.mutable
 
 /**
   * Created by zhoujiamu on 2018/7/11.
@@ -8,6 +9,8 @@ import java.io.{FileInputStream, InputStreamReader}
 class Props(path: String*) extends Serializable{
 
   private val prop = new java.util.Properties
+  private val _keys = mutable.Set[String]()
+
   println(s"Load config files: ${path.mkString(",")}.")
   path.foreach(p => load(p))
 
@@ -53,6 +56,10 @@ class Props(path: String*) extends Serializable{
     }
   }
 
+  def isExist(key: String): Boolean = {
+    _keys.contains(key)
+  }
+
   def addProperty(prop: java.util.Properties): Unit = {
     val kv = prop.keySet().toArray.map(k => k.toString -> prop.getProperty(k.toString, ""))
     setProperty(kv: _*)
@@ -60,6 +67,7 @@ class Props(path: String*) extends Serializable{
 
   def setProperty(key: String, value: String): Unit = {
     prop.setProperty(key, value)
+    _keys.add(key)
     println(s"setProperty: $key = $value")
   }
 
@@ -79,6 +87,10 @@ class Props(path: String*) extends Serializable{
       matchRes = "\\$\\{.*?\\}".r.findAllIn(value)
     }
     value
+  }
+
+  override def toString: String = {
+    keys().map(k => k + " = " + prop.getProperty(k)).mkString("\n")
   }
 
 }
