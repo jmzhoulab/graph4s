@@ -45,14 +45,25 @@
     <!--</repository>-->
   <!--</distributionManagement>-->
 
+  <!--<distributionManagement>-->
+    <!--<repository>-->
+      <!--<id>maven-releases</id>-->
+      <!--<url>http://192.168.1.21:8081/repository/maven-releases/</url>-->
+    <!--</repository>-->
+    <!--<snapshotRepository>-->
+      <!--<id>maven-snapshots</id>-->
+      <!--<url>http://192.168.1.21:8081/repository/maven-snapshots/</url>-->
+    <!--</snapshotRepository>-->
+  <!--</distributionManagement>-->
+
   <distributionManagement>
     <repository>
-      <id>maven-releases</id>
-      <url>http://192.168.1.21:8081/repository/maven-releases/</url>
+      <id>releases</id>
+      <url>http://192.168.1.29:8081/nexus/content/repositories/releases</url>
     </repository>
     <snapshotRepository>
-      <id>maven-snapshots</id>
-      <url>http://192.168.1.21:8081/repository/maven-snapshots/</url>
+      <id>snapshots</id>
+      <url>http://192.168.1.29:8081/nexus/content/repositories/snapshots</url>
     </snapshotRepository>
   </distributionManagement>
 
