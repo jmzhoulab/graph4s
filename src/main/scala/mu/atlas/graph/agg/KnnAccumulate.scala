@@ -13,15 +13,24 @@ import scala.reflect.ClassTag
 /**
   * Created by zhoujm on 2020/6/4.
   */
-object AggKhop {
+object KnnAccumulate {
 
+  /**
+    * 布隆过滤器集合，支持自动扩展。当图中节点度相差较大时，这就会导致有些节点的k紧邻数量较大，而有些会较小。
+    * 如果所有节点都是用单个布隆过滤器，那么需要考虑k紧邻数量较大的节点过滤问题，需要定义容量较大的过滤器，
+    * 这个时候对于k紧邻数量小的邻居，使用容量大的过滤器是一种浪费，大材小用。因此这里定义一个可自动扩展布隆
+    * 过滤器集合，对于需要容量大的节点，自动增加多个容量小的过滤器来解决。
+    *
+    * @param expectedInsertions Int 单个布隆过滤器期望的容量大小
+    * @param fpp Float 单个布隆过滤器的错误率
+    */
   case class BloomFilters(expectedInsertions: Int, fpp: Float){
     private var _count = 0
     private val filters = ArrayBuffer(BloomFilter.create(Funnels.longFunnel, expectedInsertions, fpp))
 
     def add(value: Long): Unit ={
       _count += 1
-      if (_count > expectedInsertions) {
+      if (_count > expectedInsertions) {    // 当前布隆过滤器超过设定的容量时，新增新的布隆过滤器来进行扩容
         filters.append(BloomFilter.create(Funnels.longFunnel, expectedInsertions, fpp))
         _count = 0
       } else
@@ -39,42 +48,65 @@ object AggKhop {
     def size: Int = filters.length
   }
 
+  /**
+    * 节点属性类
+    *
+    * @param khop kbop 邻居集合，最短路为k的邻居集
+    * @param filter 过滤器
+    * @param acc 累加结果
+    */
   case class Attr(khop: Set[(VertexId, Vector[Double])],
                   filter: BloomFilters,
                   acc: Vector[Double])
 
 
-  def run[T: ClassTag](graph: Graph[Vector[Double], T], depth: Int): Graph[Vector[Double], T] ={
-    graph.mapVertices{case(vid, vector) => {
-      val filter = BloomFilters(100000, 0.001f)
+  /**
+    * Knn累加方法，提供向量属性图、深度，计算在指定深度范围内邻居属性的累加结果
+    *
+    * @param graph 向量属性图
+    * @param k 深度
+    * @tparam T 边属性的类型
+    * @return knn累加结果
+    */
+  def run[T: ClassTag](graph: Graph[Vector[Double], T],
+                       k: Int,
+                       bufferSize: Int = 10000,
+                       filterSize: Int = 100000,
+                       fpp: Float = 0.001f): Graph[Vector[Double], T] ={
+    // 初始化节点属性
+    val initGraph = graph.mapVertices{case(vid, vector) => {
+      val filter = BloomFilters(filterSize, fpp)
       filter.add(vid)
       Attr(Set(vid -> vector), filter, Vector.zeros[Double](vector.length))
-    }}.pregel(initialMsg = Set.empty[(VertexId, Vector[Double])], maxIterations = depth)(
+    }}
+
+    // pregel迭代累积knn的属性值
+    initGraph.pregel(initialMsg = Set.empty[(VertexId, Vector[Double])], maxIterations = k)(
       vprog = (_, attr, msg) => {
         if (msg.isEmpty)
           attr
         else {
           var acc = attr.acc
           msg.foreach(m => {
-            attr.filter.add(m._1)
-            acc += m._2
+            attr.filter.add(m._1)   // 布隆过滤新增节点，标记该节点已被访问
+            acc += m._2             // 累加
           })
           attr.copy(khop = msg, acc = acc)
         }
       },
-      sendMsg = et => {
+      sendMsg = et => {   // 如果当前节点khop邻居不在对端节点上，则将其发送给对方
         Iterator(
           et.dstId -> et.srcAttr.khop.filter(m => !et.dstAttr.filter.mightContain(m._1)),
           et.srcId -> et.dstAttr.khop.filter(m => !et.srcAttr.filter.mightContain(m._1))
         )
       },
       mergeMsg = (msg1, msg2) => {
-        if (msg1.size > 100000)
+        if (msg1.size > bufferSize)
           msg1
-        else if (msg2.size > 100000)
+        else if (msg2.size > bufferSize)
           msg2
         else
-          msg1 ++  msg2
+          msg1 ++ msg2
       }
     ).mapVertices((_, attr) => attr.acc)
   }
