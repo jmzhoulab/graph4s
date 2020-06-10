@@ -36,7 +36,7 @@
                             </artifactSet>
                             <relocations>
                                 <relocation>
-                                    <pattern>com.google.guava</pattern>
+                                    <pattern>com.google</pattern>
                                     <shadedPattern>jiamz.shaded.guava</shadedPattern>
                                 </relocation>
                             </relocations>

@@ -102,6 +102,11 @@
       <version>${spark.version}</version>
       <scope>${dependency.scope}</scope>
     </dependency>
+    <dependency>
+      <groupId>com.jiamz.guavan</groupId>
+      <artifactId>guavan-shaded</artifactId>
+      <version>14.0.1</version>
+    </dependency>
   </dependencies>
 
   <build>

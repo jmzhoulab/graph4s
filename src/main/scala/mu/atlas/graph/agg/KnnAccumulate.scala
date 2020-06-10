@@ -1,6 +1,6 @@
 package mu.atlas.graph.agg
 
-import com.google.common.hash.{BloomFilter, Funnels}
+import jiamz.shaded.guava.common.hash.{BloomFilter, Funnels}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.graphx.{Graph, VertexId}
 import breeze.linalg.Vector
