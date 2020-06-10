@@ -89,7 +89,8 @@ object KnnAccumulate {
 
     // pregel迭代累积knn的属性值
     val pregelGraph = initGraph.pregel(initialMsg = Set.empty[((VertexId, Int), Vector[Double])], maxIterations = iteration)(
-      vprog = (_, attr, msg) => {
+      vprog = (vid, attr, msg) => {
+        println(s"____ $vid ____")
         println(attr)
         println(msg)
         if (msg.isEmpty)
@@ -104,10 +105,19 @@ object KnnAccumulate {
         }
       },
       sendMsg = et => {   // 如果当前节点khop邻居不在对端节点上，则将其发送给对方
-        Iterator(
+        println("-"*10)
+        println(et.srcId + ": " + et.srcAttr)
+        println(et.dstId + ": " + et.dstAttr)
+        val aa = Iterator(
           et.dstId -> diff(et.srcAttr, et.dstAttr),
           et.srcId -> diff(et.dstAttr, et.srcAttr)
-        ).filter(_._2.nonEmpty)
+        ).filter(_._2.nonEmpty).toSet
+        println(aa)
+        aa.toIterator
+//        Iterator(
+//          et.dstId -> diff(et.srcAttr, et.dstAttr),
+//          et.srcId -> diff(et.dstAttr, et.srcAttr)
+//        ).filter(_._2.nonEmpty)
       },
       mergeMsg = (msg1, msg2) => {
         println("msg1: " + msg1 + ", msg2: " + msg2)
