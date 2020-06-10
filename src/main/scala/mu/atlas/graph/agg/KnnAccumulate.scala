@@ -55,7 +55,7 @@ object KnnAccumulate {
     * @param filter 过滤器
     * @param acc 累加结果
     */
-  case class Attr(khop: Set[(VertexId, Vector[Double])],
+  case class Attr(khop: Set[((VertexId, Int), Vector[Double])],
                   filter: BloomFilters,
                   acc: Vector[Double])
 
@@ -65,42 +65,52 @@ object KnnAccumulate {
     *
     * @param graph 向量属性图
     * @param k 深度
-    * @tparam T 边属性的类型
+    * @tparam ED 边属性的类型
     * @return knn累加结果
     */
-  def run[T: ClassTag](graph: Graph[Vector[Double], T],
+  def run[ED: ClassTag](graph: Graph[Vector[Double], ED],
                        k: Int,
-                       bufferSize: Int = 10000,
+                       bufferSize: Int = Int.MaxValue,
                        filterSize: Int = 100000,
-                       fpp: Float = 0.001f): Graph[Vector[Double], T] ={
+                       fpp: Float = 0.001f): Graph[Vector[Double], ED] ={
     // 初始化节点属性
     val initGraph = graph.mapVertices{case(vid, vector) => {
       val filter = BloomFilters(filterSize, fpp)
       filter.add(vid)
-      Attr(Set(vid -> vector), filter, Vector.zeros[Double](vector.length))
+      Attr(Set((vid, 0) -> vector), filter, Vector.zeros[Double](vector.length))
     }}
 
+    def diff(attr1: Attr, attr2: Attr): Set[((VertexId, Int), Vector[Double])] ={
+      attr1.khop.map{case((knn, d), vec) => ((knn, d+1), vec)}
+        .filter(m => !attr2.filter.mightContain(m._1._1) && m._1._2 <= k)
+    }
+
+    val iteration = if (bufferSize == Int.MaxValue) k else 100
+
     // pregel迭代累积knn的属性值
-    initGraph.pregel(initialMsg = Set.empty[(VertexId, Vector[Double])], maxIterations = k)(
+    val pregelGraph = initGraph.pregel(initialMsg = Set.empty[((VertexId, Int), Vector[Double])], maxIterations = iteration)(
       vprog = (_, attr, msg) => {
+        println(attr)
+        println(msg)
         if (msg.isEmpty)
           attr
         else {
           var acc = attr.acc
           msg.foreach(m => {
-            attr.filter.add(m._1)   // 布隆过滤新增节点，标记该节点已被访问
-            acc += m._2             // 累加
+            attr.filter.add(m._1._1)   // 布隆过滤新增节点，标记该节点已被访问
+            acc += m._2                // 累加
           })
           attr.copy(khop = msg, acc = acc)
         }
       },
       sendMsg = et => {   // 如果当前节点khop邻居不在对端节点上，则将其发送给对方
         Iterator(
-          et.dstId -> et.srcAttr.khop.filter(m => !et.dstAttr.filter.mightContain(m._1)),
-          et.srcId -> et.dstAttr.khop.filter(m => !et.srcAttr.filter.mightContain(m._1))
-        )
+          et.dstId -> diff(et.srcAttr, et.dstAttr),
+          et.srcId -> diff(et.dstAttr, et.srcAttr)
+        ).filter(_._2.nonEmpty)
       },
       mergeMsg = (msg1, msg2) => {
+        println("msg1: " + msg1 + ", msg2: " + msg2)
         if (msg1.size > bufferSize)
           msg1
         else if (msg2.size > bufferSize)
@@ -108,7 +118,9 @@ object KnnAccumulate {
         else
           msg1 ++ msg2
       }
-    ).mapVertices((_, attr) => attr.acc)
+    )
+    pregelGraph.vertices.collect().foreach(println)
+    pregelGraph.mapVertices((_, attr) => attr.acc)
   }
 
   def main(args: Array[String]): Unit = {
@@ -134,7 +146,7 @@ object KnnAccumulate {
     ))
 
     val graph = Graph.fromEdgeTuples(rdd, Vector(1.0))
-    val pregelGraph = run(graph, 3)
+    val pregelGraph = run(graph, k=3, bufferSize = 2, filterSize = 10)
 
     pregelGraph.vertices.collect().foreach(x => {
       println(x)
