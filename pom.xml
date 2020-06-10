@@ -103,7 +103,7 @@
       <scope>${dependency.scope}</scope>
     </dependency>
     <dependency>
-      <groupId>com.jiamz.guavan</groupId>
+      <groupId>jiamz.guavan</groupId>
       <artifactId>guavan-shaded</artifactId>
       <version>14.0.1</version>
     </dependency>
