@@ -98,6 +98,12 @@
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
+      <artifactId>spark-mllib_${scala.binary}</artifactId>
+      <version>${spark.version}</version>
+      <scope>${dependency.scope}</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
       <artifactId>spark-graphx_${scala.binary}</artifactId>
       <version>${spark.version}</version>
       <scope>${dependency.scope}</scope>
